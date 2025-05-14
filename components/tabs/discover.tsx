@@ -201,7 +201,7 @@ const DiscoverScreen = () => {
           keyExtractor={(item) => item.docID + ""}
           renderItem={({ item }) => {
             return (
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => navigation.navigate("destination", item)}>
                 <View style={{ maxWidth: 175, marginRight: 30 }}>
                   <Image
                     style={{
@@ -251,7 +251,7 @@ const DiscoverScreen = () => {
           keyExtractor={(item) => item.docID + ""}
           renderItem={({ item }) => {
             return (
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => navigation.navigate("article", item)}>
                 <View style={{ maxWidth: 250, marginRight: 30 }}>
                   <Image
                     style={{

@@ -182,7 +182,8 @@ const RegisterScreen = () => {
         email,
         password,
         fullName,
-        createdAt: new Date()
+        createdAt: new Date(),
+        permission: "user",
       });
   
     } catch (error) {}

@@ -11,6 +11,8 @@ type RootStackParamList = {
     "generate-trip": ITripData,
     "trip-details": any,
     "map": any,
+    "destination": any,
+    "article": any,
 };
 
 interface ITripData {

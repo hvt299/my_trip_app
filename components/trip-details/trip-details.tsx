@@ -1,4 +1,9 @@
-import { NavigationProp, RouteProp, useNavigation, useRoute } from "@react-navigation/native";
+import {
+  NavigationProp,
+  RouteProp,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import {
@@ -13,6 +18,8 @@ import {
 import HotelCard from "./HotelCard";
 import PlaceCard from "./PlaceCard";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "../../configs/FirebaseConfig";
 
 const styles = StyleSheet.create({
   container: {
@@ -53,6 +60,8 @@ const TripDetailScreen = () => {
   const route: RouteProp<RootStackParamList, "trip-details"> = useRoute();
   const trip: any = route.params;
   const [tripDetails, setTripDetails] = useState<any>();
+  const [destination, setDestination] = useState<any>();
+  const [article, setArticle] = useState<any>();
 
   const navigation: NavigationProp<RootStackParamList> = useNavigation();
 
@@ -61,16 +70,141 @@ const TripDetailScreen = () => {
     // console.log(JSON.parse(tripDetails.tripData).photoRef);
     navigation.setOptions({
       headerRight: () => (
-        <MaterialIcons
-          style={styles.right_icon}
-          name="explore"
-          size={24}
-          color="black"
-          onPress={() => navigation.navigate("map", trip)}
-        />
+        <View style={{ flexDirection: "row", gap: 10 }}>
+          <MaterialIcons
+            style={styles.right_icon}
+            name="explore"
+            size={24}
+            color="black"
+            onPress={() => navigation.navigate("map", trip)}
+          />
+        </View>
       ),
     });
   }, []);
+
+  useEffect(() => {
+    setTimeout(searchCity, 500);
+    setTimeout(searchArticle, 500);
+  }, [tripDetails]);
+
+  useEffect(() => {
+    // console.log(article);
+    if (destination && article) {
+      navigation.setOptions({
+        headerRight: () => (
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            <MaterialIcons
+              style={styles.right_icon}
+              name="info-outline"
+              size={24}
+              color="black"
+              onPress={() => navigation.navigate("destination", destination)}
+            />
+            <MaterialIcons
+              style={styles.right_icon}
+              name="newspaper"
+              size={24}
+              color="black"
+              onPress={() => navigation.navigate("article", article)}
+            />
+            <MaterialIcons
+              style={styles.right_icon}
+              name="explore"
+              size={24}
+              color="black"
+              onPress={() => navigation.navigate("map", trip)}
+            />
+          </View>
+        ),
+      });
+    } else if (destination) {
+      navigation.setOptions({
+        headerRight: () => (
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            <MaterialIcons
+              style={styles.right_icon}
+              name="info-outline"
+              size={24}
+              color="black"
+              onPress={() => navigation.navigate("destination", destination)}
+            />
+            <MaterialIcons
+              style={styles.right_icon}
+              name="explore"
+              size={24}
+              color="black"
+              onPress={() => navigation.navigate("map", trip)}
+            />
+          </View>
+        ),
+      });
+    } else if (article) {
+      navigation.setOptions({
+        headerRight: () => (
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            <MaterialIcons
+              style={styles.right_icon}
+              name="newspaper"
+              size={24}
+              color="black"
+              onPress={() => navigation.navigate("article", article)}
+            />
+            <MaterialIcons
+              style={styles.right_icon}
+              name="explore"
+              size={24}
+              color="black"
+              onPress={() => navigation.navigate("map", trip)}
+            />
+          </View>
+        ),
+      });
+    }
+  }, [destination, article]);
+
+  const searchCity = async () => {
+    if (tripDetails) {
+      const keyword = tripDetails.tripPlan.tripDetails.location
+        .split(",")[0]
+        .trim();
+      const destinationRef = collection(db, "Destination");
+      const q = query(
+        destinationRef,
+        where("city", ">=", keyword),
+        where("city", "<", keyword + "\uf8ff")
+      );
+
+      const querySnapshot = await getDocs(q);
+      const results = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setDestination(results[0]);
+    }
+  };
+
+  const searchArticle = async () => {
+    if (tripDetails) {
+      const keyword = tripDetails.tripPlan.tripDetails.location
+        .split(",")[0]
+        .trim();
+
+      const destinationRef = collection(db, "Article");
+      const querySnapshot = await getDocs(destinationRef);
+      const results = querySnapshot.docs
+        .map((doc: any) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        .filter((doc) =>
+          doc.title.toLowerCase().includes(keyword.toLowerCase())
+        );
+
+      setArticle(results[0]);
+    }
+  };
 
   return (
     tripDetails && (

@@ -12,6 +12,8 @@ import ReviewTripScreen from "../create-trip/review-trip";
 import GenerateTripScreen from "../create-trip/generate-trip";
 import TripDetailScreen from "../trip-details/trip-details";
 import MapScreen from "../trip-details/map";
+import DestinationScreen from "../destinations/destination";
+import ArticleScreen from "../articles/article";
 
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -122,6 +124,24 @@ const AppNavigation = () => {
           title: "",
           header: () => <></>
           // headerTransparent: true
+         }}
+      />
+      <Stack.Screen
+        name="destination"
+        component={DestinationScreen}
+        options={{ 
+          title: "",
+          // header: () => <></>
+          headerTransparent: true
+         }}
+      />
+      <Stack.Screen
+        name="article"
+        component={ArticleScreen}
+        options={{ 
+          title: "",
+          // header: () => <></>
+          headerTransparent: true
          }}
       />
     </Stack.Navigator>
