@@ -13,6 +13,7 @@ type RootStackParamList = {
     "map": any,
     "destination": any,
     "article": any,
+    "article-list": any,
 };
 
 interface ITripData {

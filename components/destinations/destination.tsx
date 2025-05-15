@@ -44,10 +44,11 @@ const DestinationScreen = () => {
             marginTop: -30,
             borderTopLeftRadius: 30,
             borderTopRightRadius: 30,
+            gap: 5,
           }}
         >
           <Text style={{ fontSize: 18, fontWeight: 500 }}>
-            {destination.city} - {destination.country}
+            {destination.name} - {destination.city}
           </Text>
           <Text style={{ fontSize: 16, color: "#333", fontWeight: 300 }}>
             {destination.content}

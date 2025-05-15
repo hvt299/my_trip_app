@@ -3,11 +3,17 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useEffect, useState } from "react";
 import { GetGeoCoordinates, GetPhotoRef } from "../../services/GooglePlaceAPI";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "../../configs/FirebaseConfig";
+
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 const styles = StyleSheet.create({
   control: {
     minWidth: 30,
     maxWidth: 100,
+    flexDirection: "row",
+    gap: 6,
     // marginVertical: 10,
   },
   button: {
@@ -17,6 +23,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#333",
     borderRadius: 8,
+  },
+  right_icon: {
+    borderRadius: 30,
   },
 });
 
@@ -32,9 +41,14 @@ export default function PlaceCard({
   const [photoRef, setPhotoRef] = useState<any>();
   const [coordinates, setCoordinates] = useState<any>();
 
+  const [destination, setDestination] = useState<any>();
+  const [articleList, setArticleList] = useState<any[]>([]);
+
   useEffect(() => {
     GetGooglePhotoRef();
     GetGoogleGeoCoordinates();
+    searchDestination(activity.placeName);
+    searchArticles(activity.placeName);
   }, []);
 
   const GetGooglePhotoRef = async () => {
@@ -45,7 +59,47 @@ export default function PlaceCard({
   const GetGoogleGeoCoordinates = async () => {
     const result = await GetGeoCoordinates(activity.placeName);
     setCoordinates(result);
-  }
+  };
+
+  const searchDestination = async (name: String) => {
+    if (activity) {
+      const keyword = name.trim();
+      const destinationRef = collection(db, "Destination");
+      const q = query(
+        destinationRef,
+        where("name", ">=", keyword),
+        where("name", "<", keyword + "\uf8ff")
+      );
+
+      const querySnapshot = await getDocs(q);
+      const results = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setDestination(results[0]);
+    }
+  };
+
+  const searchArticles = async (name: String) => {
+    if (activity) {
+      const keyword = name.trim();
+      const destinationRef = collection(db, "Article");
+      const q = query(
+        destinationRef,
+        where("destination", ">=", keyword),
+        where("destination", "<", keyword + "\uf8ff")
+      );
+
+      const querySnapshot = await getDocs(q);
+      const results = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setArticleList(results);
+    }
+  };
 
   return (
     <View
@@ -87,7 +141,7 @@ export default function PlaceCard({
             alignItems: "center",
           }}
         >
-          <View style={{ marginTop: 5, gap: 5, width: "85%" }}>
+          <View style={{ marginTop: 5, gap: 5, width: "80%" }}>
             <Text style={{ fontSize: 14 }}>
               🎟️ Ticket Price:{" "}
               <Text style={{ fontWeight: "500" }}>
@@ -101,20 +155,32 @@ export default function PlaceCard({
             </Text>
           </View>
           <View style={styles.control}>
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: "#333" }]}
-              // onPress={() =>
-              //   navigation.navigate("map", {
-              //     placeName: activity.placeName,
-              //     latitude: coordinates.lat,
-              //     longitude: coordinates.lng,
-              //     latitudeDelta: 0.005,
-              //     longitudeDelta: 0.005,
-              //   })
-              // }
-            >
-              <Ionicons name="navigate" size={24} color="#fff" />
-            </TouchableOpacity>
+            {destination && (
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: "#333" }]}
+                onPress={() => navigation.navigate("destination", destination)}
+              >
+                <MaterialIcons
+                  style={styles.right_icon}
+                  name="info-outline"
+                  size={24}
+                  color="#fff"
+                />
+              </TouchableOpacity>
+            )}
+            {articleList.length > 0 && (
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: "#333" }]}
+                onPress={() => navigation.navigate("article-list", articleList)}
+              >
+                <MaterialIcons
+                  style={styles.right_icon}
+                  name="newspaper"
+                  size={24}
+                  color="#fff"
+                />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>

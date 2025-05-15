@@ -14,6 +14,7 @@ import TripDetailScreen from "../trip-details/trip-details";
 import MapScreen from "../trip-details/map";
 import DestinationScreen from "../destinations/destination";
 import ArticleScreen from "../articles/article";
+import ArticleListScreen from "../articles/article-list";
 
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -143,6 +144,15 @@ const AppNavigation = () => {
           // header: () => <></>
           headerTransparent: true
          }}
+      />
+      <Stack.Screen
+        name="article-list"
+        component={ArticleListScreen}
+        options={{
+          title: "Popular Articles",
+          // header: () => <></>,
+          headerTransparent: true
+        }}
       />
     </Stack.Navigator>
   );

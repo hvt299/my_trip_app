@@ -20,7 +20,7 @@ import {
   useRoute,
 } from "@react-navigation/native";
 import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../configs/FirebaseConfig";
 import { red } from "react-native-reanimated/lib/typescript/Colors";
 
@@ -148,14 +148,59 @@ const DiscoverScreen = () => {
     setLoadingDestination(false);
   };
 
+  // const getArticles = async () => {
+  //   setLoadingArticle(true);
+  //   setArticleList([]);
+  //   const querySnapshot = await getDocs(collection(db, "Article"));
+  //   querySnapshot.forEach((doc) => {
+  //     const fullName = await getUserFullNameByEmail(doc.data().userEmail);
+  //     setArticleList((prev) => [...prev, { docID: doc.id, ...doc.data(), author: fullName}]);
+  //   });
+  //   setLoadingArticle(false);
+  // };
+
   const getArticles = async () => {
     setLoadingArticle(true);
     setArticleList([]);
-    const querySnapshot = await getDocs(collection(db, "Article"));
-    querySnapshot.forEach((doc) => {
-      setArticleList((prev) => [...prev, { docID: doc.id, ...doc.data() }]);
-    });
+
+    try {
+      const querySnapshot = await getDocs(collection(db, "Article"));
+
+      const promises = querySnapshot.docs.map(async (doc) => {
+        const fullName = await getUserFullNameByEmail(doc.data().userEmail);
+        return {
+          docID: doc.id,
+          ...doc.data(),
+          author: fullName !== "" ? fullName : "Unknown",
+        };
+      });
+
+      const articles = await Promise.all(promises);
+
+      setArticleList(articles);
+    } catch (error) {
+      console.error("Lỗi khi lấy bài báo: ", error);
+    }
+
     setLoadingArticle(false);
+  };
+
+  const getUserFullNameByEmail = async (email: string) => {
+    try {
+      const userRef = collection(db, "UserAccount");
+      const q = query(userRef, where("email", "==", email));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const userData = querySnapshot.docs[0].data();
+        const fullName = userData.fullName;
+        return fullName;
+      } else {
+        return "";
+      }
+    } catch (error) {
+      return "";
+    }
   };
 
   useEffect(() => {
@@ -201,7 +246,9 @@ const DiscoverScreen = () => {
           keyExtractor={(item) => item.docID + ""}
           renderItem={({ item }) => {
             return (
-              <TouchableOpacity onPress={() => navigation.navigate("destination", item)}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate("destination", item)}
+              >
                 <View style={{ maxWidth: 175, marginRight: 30 }}>
                   <Image
                     style={{
@@ -218,13 +265,13 @@ const DiscoverScreen = () => {
                     style={{ fontSize: 15, fontWeight: 500 }}
                     numberOfLines={1}
                   >
-                    {item.city}
+                    {item.name}
                   </Text>
                   <Text
                     style={{ color: "gray", fontWeight: 300 }}
                     numberOfLines={1}
                   >
-                    {item.country}
+                    {item.city}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -242,7 +289,11 @@ const DiscoverScreen = () => {
       <View>
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <Text style={styles.heading}>Popular Articles</Text>
-          <Text style={styles.description}>View more</Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("article-list", articleList)}
+          >
+            <Text style={styles.description}>View more</Text>
+          </TouchableOpacity>
         </View>
         <FlatList
           horizontal
@@ -251,7 +302,9 @@ const DiscoverScreen = () => {
           keyExtractor={(item) => item.docID + ""}
           renderItem={({ item }) => {
             return (
-              <TouchableOpacity onPress={() => navigation.navigate("article", item)}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate("article", item)}
+              >
                 <View style={{ maxWidth: 250, marginRight: 30 }}>
                   <Image
                     style={{
