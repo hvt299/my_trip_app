@@ -164,7 +164,11 @@ const DiscoverScreen = () => {
     setArticleList([]);
 
     try {
-      const querySnapshot = await getDocs(collection(db, "Article"));
+      const q = query(
+        collection(db, "Article"),
+        where("status", "==", "published")
+      );
+      const querySnapshot = await getDocs(q);
 
       const promises = querySnapshot.docs.map(async (doc) => {
         const fullName = await getUserFullNameByEmail(doc.data().userEmail);

@@ -1,5 +1,5 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   FlatList,
@@ -42,14 +42,66 @@ const ArticleListScreen = () => {
 
   const [loadingArticle, setLoadingArticle] = useState(false);
 
+  // const getArticles = async () => {
+  //   setLoadingArticle(true);
+  //   setArticleList([]);
+  //   const q = query(
+  //     collection(db, "Article"),
+  //     where("status", "==", "published")
+  //   );
+  //   const querySnapshot = await getDocs(q);
+  //   querySnapshot.forEach((doc) => {
+  //     setArticleList((prev) => [...prev, { docID: doc.id, ...doc.data() }]);
+  //   });
+  //   setLoadingArticle(false);
+  // };
+
   const getArticles = async () => {
     setLoadingArticle(true);
     setArticleList([]);
-    const querySnapshot = await getDocs(collection(db, "Article"));
-    querySnapshot.forEach((doc) => {
-      setArticleList((prev) => [...prev, { docID: doc.id, ...doc.data() }]);
-    });
+
+    try {
+      const q = query(
+        collection(db, "Article"),
+        where("status", "==", "published")
+      );
+      const querySnapshot = await getDocs(q);
+
+      const promises = querySnapshot.docs.map(async (doc) => {
+        const fullName = await getUserFullNameByEmail(doc.data().userEmail);
+        return {
+          docID: doc.id,
+          ...doc.data(),
+          author: fullName !== "" ? fullName : "Unknown",
+        };
+      });
+
+      const articles = await Promise.all(promises);
+
+      setArticleList(articles);
+    } catch (error) {
+      console.error("Lỗi khi lấy bài báo: ", error);
+    }
+
     setLoadingArticle(false);
+  };
+
+  const getUserFullNameByEmail = async (email: string) => {
+    try {
+      const userRef = collection(db, "UserAccount");
+      const q = query(userRef, where("email", "==", email));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const userData = querySnapshot.docs[0].data();
+        const fullName = userData.fullName;
+        return fullName;
+      } else {
+        return "";
+      }
+    } catch (error) {
+      return "";
+    }
   };
 
   useEffect(() => {

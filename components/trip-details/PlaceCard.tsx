@@ -108,7 +108,8 @@ export default function PlaceCard({
       const q = query(
         destinationRef,
         where("destination", ">=", keyword),
-        where("destination", "<", keyword + "\uf8ff")
+        where("destination", "<", keyword + "\uf8ff"),
+        where("status", "==", "published"),
       );
 
       try {
@@ -117,7 +118,7 @@ export default function PlaceCard({
         const promises = querySnapshot.docs.map(async (doc) => {
           const fullName = await getUserFullNameByEmail(doc.data().userEmail);
           return {
-            id: doc.id,
+            docID: doc.id,
             ...doc.data(),
             author: fullName !== "" ? fullName : "Unknown",
           };
