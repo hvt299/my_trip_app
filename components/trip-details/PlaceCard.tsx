@@ -81,8 +81,28 @@ export default function PlaceCard({
     }
   };
 
-  const searchArticles = async (name: String) => {
-    if (activity) {
+  // const searchArticles = async (name: String) => {
+  //   if (activity) {
+  //     const keyword = name.trim();
+  //     const destinationRef = collection(db, "Article");
+  //     const q = query(
+  //       destinationRef,
+  //       where("destination", ">=", keyword),
+  //       where("destination", "<", keyword + "\uf8ff")
+  //     );
+
+  //     const querySnapshot = await getDocs(q);
+  //     const results = querySnapshot.docs.map((doc) => ({
+  //       id: doc.id,
+  //       ...doc.data(),
+  //     }));
+
+  //     setArticleList(results);
+  //   }
+  // };
+
+  const searchArticles = async (name: string) => {
+    if (name) {
       const keyword = name.trim();
       const destinationRef = collection(db, "Article");
       const q = query(
@@ -91,13 +111,42 @@ export default function PlaceCard({
         where("destination", "<", keyword + "\uf8ff")
       );
 
-      const querySnapshot = await getDocs(q);
-      const results = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      try {
+        const querySnapshot = await getDocs(q);
 
-      setArticleList(results);
+        const promises = querySnapshot.docs.map(async (doc) => {
+          const fullName = await getUserFullNameByEmail(doc.data().userEmail);
+          return {
+            id: doc.id,
+            ...doc.data(),
+            author: fullName !== "" ? fullName : "Unknown",
+          };
+        });
+
+        const results = await Promise.all(promises);
+
+        setArticleList(results);
+      } catch (error) {
+        console.error("Lỗi khi tìm kiếm bài báo: ", error);
+      }
+    }
+  };
+
+  const getUserFullNameByEmail = async (email: string) => {
+    try {
+      const userRef = collection(db, "UserAccount");
+      const q = query(userRef, where("email", "==", email));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const userData = querySnapshot.docs[0].data();
+        const fullName = userData.fullName;
+        return fullName;
+      } else {
+        return "";
+      }
+    } catch (error) {
+      return "";
     }
   };
 
